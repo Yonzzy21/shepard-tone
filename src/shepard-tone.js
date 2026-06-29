@@ -37,14 +37,15 @@ class ShepardTone {
 
     this.gainNode.connect(this.audioContext.destination);
     // this.oscillatorNodes = new Array(this.loopStepsCount).fill(null);
-    this.octaveCount = 9; 
+    this.octaveCount = 11; 
     this.oscillatorNodes = new Array(this.octaveCount).fill(null);
-    this.maxFrequency = this.minimumFrequency * Math.pow(2, this.octaveCount); // LOCK IT HERE
+    this.maxFrequency = this.minimumFrequency * Math.pow(2, 9); // creating 11 octaves but clamping to 9
     this.currentStep = 0;
     this.timeout = null;
     this.IdleTimeout = null;
     this.playing = false;
     this.volume = 1;
+    this.second_volume = 0.1;
     this.SetupSynth()
   }
 
@@ -52,7 +53,7 @@ class ShepardTone {
     const now = this.audioContext.currentTime
     const multiplier = Math.pow(2, 1 / this.loopStepsCount);
     // const stepSpeed = this.loopDuration / this.loopStepsCount; // dont need this for interactive
-    let baseFrequency = this.minimumFrequency *Math.pow(multiplier, targetStep);
+    let baseFrequency = (this.minimumFrequency/2) *Math.pow(multiplier, targetStep); //Created more headroom for the octaves
     const diagnostics = [];
     this.oscillatorNodes.forEach((pair, index) => {
       
@@ -94,7 +95,8 @@ class ShepardTone {
         //console.log(`Loop layer debug -> base: ${baseFrequency}, freq: ${frequency}`);
         const shepardVolumeNode = this.audioContext.createGain();
         const stepEnvelope = this.audioContext.createGain(); //knob controlling the overall envelope
-
+        const secondVolumeNode = this.audioContext.createGain();
+        secondVolumeNode.gain.value = this.second_volume;
         const oscPrimary = this.audioContext.createOscillator();
         const oscTritone = this.audioContext.createOscillator();
         oscPrimary.frequency.value = frequency; // value in hertz
@@ -107,8 +109,8 @@ class ShepardTone {
    
         //console.log(`Layer ${index} - X: ${x}`);
         const baseCurve = (1 - Math.cos(2 * Math.PI * boundedX)) /2 ; 
-        const targetGain = Math.pow(baseCurve, 1.5);
-        const floor = 0.12;
+        const targetGain = Math.pow(baseCurve, 2);
+        const floor = 0.001;
 
         shepardVolumeNode.gain.value = floor + (1 - floor) * targetGain;
         
@@ -121,8 +123,8 @@ class ShepardTone {
 
 
         oscPrimary.connect(stepEnvelope);
-        oscTritone.connect(stepEnvelope);
-        shepardVolumeNode.connect(stepEnvelope);
+        oscTritone.connect(secondVolumeNode);
+        secondVolumeNode.connect(stepEnvelope);
         stepEnvelope.connect(this.gainNode);
         stepEnvelope.connect(this.DelayNode);
 
