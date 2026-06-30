@@ -1,3 +1,4 @@
+++
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,43 +10,43 @@
     <button id="start-btn">1. Initialize & Play</button>
     <button id="test-step-btn">2. Trigger Test Step</button>
 
-    <script src="shepard-tone.js"></script>
+    <script type = "module" src="main.js"></script>
     <script>
         // This is where we will write our quick test wrappers!
-    let toneInstance = null;
+    // let toneInstance = null;
 
-    document.getElementById('start-btn').addEventListener('click', () => {
-        try {
-            // Create a standard Web Audio context
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AudioContext();
+    // document.getElementById('start-btn').addEventListener('click', () => {
+    //     try {
+    //         // Create a standard Web Audio context
+    //         const AudioContext = window.AudioContext || window.webkitAudioContext;
+    //         const ctx = new AudioContext();
             
-            // Try creating your unboxed JS class template
-            toneInstance = new ShepardTone(ctx);
+    //         // Try creating your unboxed JS class template
+    //         toneInstance = new ShepardTone(ctx);
             
-            console.log("Success! Instance created:", toneInstance);
+    //         console.log("Success! Instance created:", toneInstance);
             
-            // Start your playback method
-            toneInstance.play();
-        } catch (error) {
-            console.error("Constructor crashed! Check your JS translations:", error);
-        }
-    });
+    //         // Start your playback method
+    //         toneInstance.play();
+    //     } catch (error) {
+    //         console.error("Constructor crashed! Check your JS translations:", error);
+    //     }
+    // });
 
-    document.getElementById('test-step-btn').addEventListener('click', () => {
-        try {
+    // document.getElementById('test-step-btn').addEventListener('click', () => {
+    //     try {
             
-            // triggering the next function
-            toneInstance.next();
+    //         // triggering the next function
+    //         toneInstance.next();
             
-            console.log("Success! next step played created:", toneInstance.currentStep);
+    //         console.log("Success! next step played created:", toneInstance.currentStep);
             
-            // Start your playback method
-            toneInstance.play();
-        } catch (error) {
-            console.error("Constructor crashed! Check your JS translations:", error);
-        }
-    });
+    //         // Start your playback method
+    //         toneInstance.play();
+    //     } catch (error) {
+    //         console.error("Constructor crashed! Check your JS translations:", error);
+    //     }
+    // });
     </script>
 </body>
 </html>
