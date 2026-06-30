@@ -16,11 +16,11 @@ class ShepardTone {
   constructor(
     audioContext,
     /** The minimum frequency the tone will reach */
-    minimumFrequency = 5,
+    minimumFrequency = 20,
     /** The maximum frequency the tone will reach */
     maximumFrequency = 16000,
     /** Number of steps a tone loop consists of, an integer bigger than one */
-    loopStepsCount = 12,
+    loopStepsCount = 48,
     /** Duration of the loop in milliseconds */
     loopDuration = 5000,
 
@@ -37,20 +37,28 @@ class ShepardTone {
 
     this.gainNode.connect(this.audioContext.destination);
     // this.oscillatorNodes = new Array(this.loopStepsCount).fill(null);
-    this.octaveCount = 11; 
+    this.octaveCount = 10; 
     this.oscillatorNodes = new Array(this.octaveCount).fill(null);
-    this.maxFrequency = this.minimumFrequency * Math.pow(2, 9); // creating 11 octaves but clamping to 9
+    //this.maxFrequency = this.minimumFrequency * Math.pow(2, 9); // creating 11 octaves but clamping to 9
+    this.maxFrequency = this.maximumFrequency; // 
     this.currentStep = 0;
     this.timeout = null;
     this.IdleTimeout = null;
     this.playing = false;
     this.volume = 1;
-    this.second_volume = 0.1;
+    this.second_volume = 0.3;
     this.SetupSynth()
   }
 
     playStep = (targetStep) => {
     const now = this.audioContext.currentTime
+
+    const randomPan = Math.random() *  0.5 - 0.25;
+    console.log(`Random pan: ${randomPan}`);
+    this.PannerNode.pan.setValueAtTime(this.PannerNode.pan.value, now); // random pan value between -0.5 and 0.5
+    this.PannerNode.pan.linearRampToValueAtTime(randomPan, now + 0.3);
+    
+    
     const multiplier = Math.pow(2, 1 / this.loopStepsCount);
     // const stepSpeed = this.loopDuration / this.loopStepsCount; // dont need this for interactive
     let baseFrequency = (this.minimumFrequency/2) *Math.pow(multiplier, targetStep); //Created more headroom for the octaves
@@ -91,13 +99,15 @@ class ShepardTone {
           
         const frequency =
           baseFrequency;
-        const tritoneFrequency = frequency * 2 **(3/12) //to create a tritone u[]
+        const tritoneFrequency = frequency * 2 **(6/12) //to create a tritone u[]
         //console.log(`Loop layer debug -> base: ${baseFrequency}, freq: ${frequency}`);
         const shepardVolumeNode = this.audioContext.createGain();
         const stepEnvelope = this.audioContext.createGain(); //knob controlling the overall envelope
         const secondVolumeNode = this.audioContext.createGain();
         secondVolumeNode.gain.value = this.second_volume;
         const oscPrimary = this.audioContext.createOscillator();
+        oscPrimary.type = 'square';
+
         const oscTritone = this.audioContext.createOscillator();
         oscPrimary.frequency.value = frequency; // value in hertz
         oscTritone.frequency.value = tritoneFrequency; // value in hertz
@@ -125,8 +135,12 @@ class ShepardTone {
         oscPrimary.connect(stepEnvelope);
         oscTritone.connect(secondVolumeNode);
         secondVolumeNode.connect(stepEnvelope);
-        stepEnvelope.connect(this.gainNode);
-        stepEnvelope.connect(this.DelayNode);
+        
+        stepEnvelope.connect(this.BiquadFilter);
+
+
+
+
 
         this.envGenOn(stepEnvelope, 0.1, 0.6, shepardVolumeNode.gain.value);
         console.log(`🎵 [Envelope] Layer ${index} - Attack: 0.1, Decay: 0.6, Sustain: ${shepardVolumeNode.gain.value.toFixed(3)}`);
@@ -156,7 +170,7 @@ class ShepardTone {
     this.IdleTimeout = setTimeout(() => {
       console.log("Idle timeout reached");
       const now = this.audioContext.currentTime;
-      const releaseTime = 0.3
+      const releaseTime = 0.8
 
       this.oscillatorNodes.forEach((pair) => {
         if (pair && pair.osc && pair.env) {
@@ -249,16 +263,32 @@ class ShepardTone {
     envelope.gain.exponentialRampToValueAtTime(0.001, now + r);  }
 
   SetupSynth() {
-    this.DelayNode = this.audioContext.createDelay(1.0);
-    this.DelayNode.delayTime.value = 0.0001;
+    this.DelayNode = this.audioContext.createDelay(2.0);
+    this.DelayNode.delayTime.value = 0.00001;
     this.FeedbackNode = this.audioContext.createGain();
-    this.FeedbackNode.gain.value = 0.000001;
+    this.FeedbackNode.gain.value = 0.001;
+
+ 
+
+
+    this.BiquadFilter = this.audioContext.createBiquadFilter();
+    this.BiquadFilter.type = 'lowpass';
+    this.BiquadFilter.frequency.value = 1300;
+    this.BiquadFilter.Q.value = 0.3;
+    // simpler StereoPanner
+    this.PannerNode = this.audioContext.createStereoPanner(); 
+
+    // 2. Wire the Delay Loop
     this.DelayNode.connect(this.FeedbackNode);
     this.FeedbackNode.connect(this.DelayNode);
 
-    this.DelayNode.connect(this.gainNode);
+    // 3. Wire the Main Pedalboard! (Filter -> Panner/Delay -> Master)
+    this.BiquadFilter.connect(this.PannerNode);
+    this.BiquadFilter.connect(this.DelayNode);
 
-  }
+    this.DelayNode.connect(this.PannerNode); // Echoes go into the panner
+    this.PannerNode.connect(this.gainNode);  // Panner goes to master out
+      }
 
   next() {
    
