@@ -21,13 +21,14 @@ export async function setupPhidgets(onDataCallback) {
 
   // 2. Initialize the encoder channel
   const encoder = new Phidget22.Encoder();
-  encoder.setChannel(2); // Assumes input channel 0
+  encoder.setChannel(3); // Assumes input channel 0
   
   // 3. Listen for changes
   encoder.onPositionChange = function (positionChange) {
     const rawDelta = positionChange;
     if (rawDelta === 0) return;
     // 2. Tame the delta instantly if the user spun it violently
+    console.log(`Raw Delta: ${rawDelta}`);
 
     const clampedDelta = Math.max(-maxAllowedDelta, Math.min(maxAllowedDelta, rawDelta));
 
@@ -37,6 +38,7 @@ export async function setupPhidgets(onDataCallback) {
       // Wrap the absoluteStep within the range of TOTAL_AUDIO_STEPS
       // absoluteStep = ((absoluteStep % TOTAL_AUDIO_STEPS) + TOTAL_AUDIO_STEPS) % TOTAL_AUDIO_STEPS; 
       //Currently doesnt do anything special, need to implement future script of speed
+
     onDataCallback({delta: clampedDelta, absoluteStep: smoothedStepPosition});
   };
   
