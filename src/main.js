@@ -7,14 +7,17 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const shepardTone = new ShepardTone(audioContext);
 
 // 3. Define the bridge that responds to hardware changes
-function handleEncoderChange(delta) {
+function handleEncoderChange({delta, absoluteStep}) {
     console.log(`[Main] Encoder turned. Step Change: ${delta}`);
-    
-    if (delta > 0) {
-        shepardTone.next();
-    } else if (delta < 0) {
-        // If you built a prev() method, call it here:
-        // shepardTone.prev();
+    if (delta === 0 || delta === undefined) return;
+    // if (delta > 0) {
+    //     shepardTone.playStep(delta, absoluteStep);
+    // } else if (delta < 0) {
+    //     // If you built a prev() method, call it here:
+    //     // shepardTone.prev();
+    // }
+    if (delta !== 0) {
+        shepardTone.playStep(delta, absoluteStep);
     }
 }
 

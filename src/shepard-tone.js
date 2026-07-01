@@ -12,19 +12,6 @@ const GAIN_VOLUME_FACTOR = 12;
  * shepardTone.play();
  * ```
  */
-<<<<<<< Updated upstream
-class ShepardTone {
-  constructor(
-    audioContext,
-    /** The minimum frequency the tone will reach */
-    minimumFrequency = 5,
-    /** The maximum frequency the tone will reach */
-    maximumFrequency = 16000,
-    /** Number of steps a tone loop consists of, an integer bigger than one */
-    loopStepsCount = 12,
-    /** Duration of the loop in milliseconds */
-    loopDuration = 5000,
-=======
 export  class ShepardTone {
     constructor(
       audioContext,
@@ -33,10 +20,9 @@ export  class ShepardTone {
       /** The maximum frequency the tone will reach */
       maximumFrequency = 16000,
       /** Number of steps a tone loop consists of, an integer bigger than one */
-      loopStepsCount = 64,
+      loopStepsCount = 128,
       /** Duration of the loop in milliseconds */
       loopDuration = 5000,
->>>>>>> Stashed changes
 
       // stepSpeed = 300
     ) {
@@ -49,133 +35,9 @@ export  class ShepardTone {
       this.gainNode = this.audioContext.createGain();
       this.envelope = this.audioContext.createGain();
 
-<<<<<<< Updated upstream
-    this.gainNode.connect(this.audioContext.destination);
-    // this.oscillatorNodes = new Array(this.loopStepsCount).fill(null);
-    this.octaveCount = 11; 
-    this.oscillatorNodes = new Array(this.octaveCount).fill(null);
-    this.maxFrequency = this.minimumFrequency * Math.pow(2, 9); // creating 11 octaves but clamping to 9
-    this.currentStep = 0;
-    this.timeout = null;
-    this.IdleTimeout = null;
-    this.playing = false;
-    this.volume = 1;
-    this.second_volume = 0.1;
-    this.SetupSynth()
-  }
-
-    playStep = (targetStep) => {
-    const now = this.audioContext.currentTime
-    const multiplier = Math.pow(2, 1 / this.loopStepsCount);
-    // const stepSpeed = this.loopDuration / this.loopStepsCount; // dont need this for interactive
-    let baseFrequency = (this.minimumFrequency/2) *Math.pow(multiplier, targetStep); //Created more headroom for the octaves
-    const diagnostics = [];
-    this.oscillatorNodes.forEach((pair, index) => {
-      
-
-      // 1. "pair" checks if an object even exists in this slot (fails on the very first click because slots are null).
-  // 2. "pair.osc" verifies that the object actually contains an active oscillator node to stop.
-  // 3. "pair.env" verifies that the object actually contains a gain envelope node to fade out.
-
-      if (pair && pair.osc && pair.env) {
-        console.log(`fading outLayer ${index} `)
-        const releaseTime = 0.9;
-        this.EnvGenOff(pair.env,releaseTime)
-        if (Array.isArray(pair.osc)) {
-          pair.osc.forEach(osc => osc.stop(now + releaseTime));
-        } else {
-          pair.osc.stop(now + releaseTime);
-        }
-        console.log(``, pair, `\n` + `osciilator` ,pair?.osc, pair?.env)
-        setTimeout(() => {
-        try {
-          pair.env.disconnect(this.gainNode);
-          pair.env.disconnect(this.DelayNode);
-        } catch(e) {}
-      }, releaseTime * 1000);
-
-      }
-    });
-
-
-
-    
-    this.oscillatorNodes = this.oscillatorNodes.map(
-      (existingNodePair, index) => { 
-   
-          
-        const frequency =
-          baseFrequency;
-        const tritoneFrequency = frequency * 2 **(3/12) //to create a tritone u[]
-        //console.log(`Loop layer debug -> base: ${baseFrequency}, freq: ${frequency}`);
-        const shepardVolumeNode = this.audioContext.createGain();
-        const stepEnvelope = this.audioContext.createGain(); //knob controlling the overall envelope
-        const secondVolumeNode = this.audioContext.createGain();
-        secondVolumeNode.gain.value = this.second_volume;
-        const oscPrimary = this.audioContext.createOscillator();
-        const oscTritone = this.audioContext.createOscillator();
-        oscPrimary.frequency.value = frequency; // value in hertz
-        oscTritone.frequency.value = tritoneFrequency; // value in hertz
-
-        const x = Math.log2(frequency / this.minimumFrequency) / Math.log2(this.maxFrequency / this.minimumFrequency);
-        //console.log(`Layer ${index} - X: ${x} - maxFreq: ${maxFrequency}`);
-        const boundedX = Math.max(0, Math.min(1, x));
-                /// each octave envelope curve based on Shepards
-   
-        //console.log(`Layer ${index} - X: ${x}`);
-        const baseCurve = (1 - Math.cos(2 * Math.PI * boundedX)) /2 ; 
-        const targetGain = Math.pow(baseCurve, 2);
-        const floor = 0.001;
-
-        shepardVolumeNode.gain.value = floor + (1 - floor) * targetGain;
-        
-        diagnostics.push({
-        "Layer": index,
-        "Frequency": `${frequency.toFixed(1)} Hz`, 
-        "Curve Pos (0-1)": boundedX.toFixed(2),
-        "Calculated Vol": shepardVolumeNode.gain.value.toFixed(3)
-        });
-
-
-        oscPrimary.connect(stepEnvelope);
-        oscTritone.connect(secondVolumeNode);
-        secondVolumeNode.connect(stepEnvelope);
-        stepEnvelope.connect(this.gainNode);
-        stepEnvelope.connect(this.DelayNode);
-
-        this.envGenOn(stepEnvelope, 0.1, 0.6, shepardVolumeNode.gain.value);
-        console.log(`🎵 [Envelope] Layer ${index} - Attack: 0.1, Decay: 0.6, Sustain: ${shepardVolumeNode.gain.value.toFixed(3)}`);
-
-        oscPrimary.start(now);
-        oscTritone.start(now);
-
-        console.log(`🎵 [Creation] Layer ${index} connected at ${frequency.toFixed(1)}Hz`);
-        baseFrequency = baseFrequency * 2;
-        console.log("Diagnostics:", { 
-          baseFreq: baseFrequency, 
-          mult: multiplier, 
-          step: this.currentStep 
-        });
-        
-        return { osc: [oscPrimary, oscTritone], shepard: shepardVolumeNode, env: stepEnvelope 
-      };
-    });
-    console.table(diagnostics);
-
-    //creating timeout release:
-
-    if (this.IdleTimeout != null) {
-      clearTimeout(this.IdleTimeout);
-    }
-
-    this.IdleTimeout = setTimeout(() => {
-      console.log("Idle timeout reached");
-      const now = this.audioContext.currentTime;
-      const releaseTime = 0.3
-=======
       this.gainNode.connect(this.audioContext.destination);
       // this.oscillatorNodes = new Array(this.loopStepsCount).fill(null);
-      this.octaveCount = 10; 
+      this.octaveCount = 9; 
       this.oscillatorNodes = new Array(this.octaveCount).fill(null);
       //this.maxFrequency = this.minimumFrequency * Math.pow(2, 9); // creating 11 octaves but clamping to 9
       this.maxFrequency = this.maximumFrequency; // 
@@ -186,10 +48,59 @@ export  class ShepardTone {
       this.volume = 1;
       this.second_volume = 0.3;
       this.SetupSynth()
+      this.SetupOscillators()
+
     }
 
-      playStep = (targetStep) => {
-      const now = this.audioContext.currentTime
+    getLayerState(targetStep, index) {
+      const multiplier = Math.pow(2, 1 / this.loopStepsCount);
+      
+      // 1. Calculate base frequency for step 0
+      const absoluteBase = this.minimumFrequency;
+      
+      // 2. Find out how many total octaves our targetStep represents
+      const stepsPerOctave = this.loopStepsCount; // e.g., 64 steps per octave loop
+      const totalOctavesFromMovement = targetStep / stepsPerOctave;
+      
+      // 3. Determine the natural octave offset for this specific layer index
+      const layerOctaveOffset = index;
+      
+      // Total fractional octaves above the absolute minimum baseline
+      const totalOctavesAboveMin = totalOctavesFromMovement + layerOctaveOffset;
+      
+      // 4. FIND THE ILLUSION SPAN (How many octaves fit between min and max freq)
+      const logSpan = Math.log2(this.maxFrequency / this.minimumFrequency); // e.g., log2(16000/20) = ~9.64 octaves
+      
+      // WRAP IT: Keep the octave count cleanly looping inside our structural window bounds!
+      const wrappedOctaves = ((totalOctavesAboveMin % logSpan) + logSpan) % logSpan;
+      
+      // 5. Calculate final wrapped frequencies
+      const frequency = absoluteBase * Math.pow(2, wrappedOctaves);
+      const tritoneFrequency = frequency * Math.pow(2, 6 / 12);
+      
+      // 6. Calculate the Gaussian curve position X (Guaranteed to be 0.0 to 1.0)
+      const x = wrappedOctaves / logSpan;
+      const boundedX = Math.max(0, Math.min(1, x));
+      
+      // Classic Shepard volume curve fading out smoothly at the edges
+      const baseCurve = (1 - Math.cos(2 * Math.PI * boundedX)) / 2;
+      const targetGain = Math.pow(baseCurve, 2);
+      const floor = 0.001;
+      const calculatedVolume = floor + (1 - floor) * targetGain;
+      
+      return { frequency, tritoneFrequency, calculatedVolume };
+    }
+
+
+
+      playStep = (delta, targetStep) => {
+      const now = this.audioContext.currentTime;
+            // Add delta each encoder tick (unwrapped — never jumps 63→0)
+      this.currentStep = targetStep;
+      // Use this.currentStep for audio, not the wrapped absoluteStep from Phidget
+      //targetStep = this.currentStep;
+      this.playing = true;
+
 
       const randomPan = Math.random() *  0.5 - 0.35;
       console.log(`Random pan: ${randomPan}`);
@@ -197,128 +108,50 @@ export  class ShepardTone {
       this.PannerNode.pan.linearRampToValueAtTime(randomPan, now + 0.3);
       
       
-      const multiplier = Math.pow(2, 1 / this.loopStepsCount);
-      // const stepSpeed = this.loopDuration / this.loopStepsCount; // dont need this for interactive
-      let baseFrequency = (this.minimumFrequency/2) *Math.pow(multiplier, targetStep); //Created more headroom for the octaves
-      const diagnostics = [];
-      this.oscillatorNodes.forEach((pair, index) => {
-        
 
-        // 1. "pair" checks if an object even exists in this slot (fails on the very first click because slots are null).
-    // 2. "pair.osc" verifies that the object actually contains an active oscillator node to stop.
-    // 3. "pair.env" verifies that the object actually contains a gain envelope node to fade out.
->>>>>>> Stashed changes
-
-        if (pair && pair.osc && pair.env) {
-          // console.log(`fading outLayer ${index} `)
-          const releaseTime = 0.9;
-          this.EnvGenOff(pair.env,releaseTime)
-          if (Array.isArray(pair.osc)) {
-            pair.osc.forEach(osc => osc.stop(now + releaseTime));
-          } else {
-            pair.osc.stop(now + releaseTime);
-          }
-          // console.log(``, pair, `\n` + `osciilator` ,pair?.osc, pair?.env)
-          setTimeout(() => {
-          try {
-            pair.env.disconnect(this.gainNode);
-            pair.env.disconnect(this.DelayNode);
-          } catch(e) {}
-        }, releaseTime * 1000);
-
-        }
-      });
-
-
-
-<<<<<<< Updated upstream
-  SetupSynth() {
-    this.DelayNode = this.audioContext.createDelay(1.0);
-    this.DelayNode.delayTime.value = 0.0001;
-    this.FeedbackNode = this.audioContext.createGain();
-    this.FeedbackNode.gain.value = 0.000001;
-    this.DelayNode.connect(this.FeedbackNode);
-    this.FeedbackNode.connect(this.DelayNode);
-
-    this.DelayNode.connect(this.gainNode);
-
-  }
-
-  next() {
-   
-    this.currentStep = (this.currentStep + 1) % this.loopStepsCount;
-=======
+      const speed = Math.abs(delta);
+      let glideDuration;
+      console.log(`Speed: ${speed}`);
+      if (speed === 0 || !Number.isFinite(speed)) {
+        console.warn("Speed is zero or not finite, defaulting glide to 0.002");
+        glideDuration = 0.002;
+      } else{
+          glideDuration = Math.max(0.01, 0.2/speed); // Adjust glide duration based on speed, with a minimum of 0.01 seconds
+      }
+      if (!Number.isFinite(glideDuration)) {
+        console.warn("Glide duration is not finite, defaulting to 0.002");
+        glideDuration = 0.002;
+      }
+      console.log(`Glide Duration: ${glideDuration}`);
       
-      this.oscillatorNodes = this.oscillatorNodes.map(
-        (existingNodePair, index) => { 
->>>>>>> Stashed changes
-    
-            
-          const frequency =
-            baseFrequency;
-          const tritoneFrequency = frequency * 2 **(6/12) //to create a tritone u[]
-          //console.log(`Loop layer debug -> base: ${baseFrequency}, freq: ${frequency}`);
-          const shepardVolumeNode = this.audioContext.createGain();
-          const stepEnvelope = this.audioContext.createGain(); //knob controlling the overall envelope
-          const secondVolumeNode = this.audioContext.createGain();
-          secondVolumeNode.gain.value = this.second_volume;
-          const oscPrimary = this.audioContext.createOscillator();
-          oscPrimary.type = 'square';
+      const diagnostics = [];
 
-          const oscTritone = this.audioContext.createOscillator();
-          oscPrimary.frequency.value = frequency; // value in hertz
-          oscTritone.frequency.value = tritoneFrequency; // value in hertz
 
-          const x = Math.log2(frequency / this.minimumFrequency) / Math.log2(this.maxFrequency / this.minimumFrequency);
-          //console.log(`Layer ${index} - X: ${x} - maxFreq: ${maxFrequency}`);
-          const boundedX = Math.max(0, Math.min(1, x));
-                  /// each octave envelope curve based on Shepards
-    
-          //console.log(`Layer ${index} - X: ${x}`);
-          const baseCurve = (1 - Math.cos(2 * Math.PI * boundedX)) /2 ; 
-          const targetGain = Math.pow(baseCurve, 2);
-          const floor = 0.001;
+      
+      this.oscillatorNodes.forEach((pair, index) => {
+        if (!pair) return;
+        console.log(`[Layer ${index} Structure]:`, pair);
 
-          shepardVolumeNode.gain.value = floor + (1 - floor) * targetGain;
+        const { frequency, tritoneFrequency, calculatedVolume } = this.getLayerState(targetStep, index);
+        
           
-          diagnostics.push({
-          "Layer": index,
-          "Frequency": `${frequency.toFixed(1)} Hz`, 
-          "Curve Pos (0-1)": boundedX.toFixed(2),
-          "Calculated Vol": shepardVolumeNode.gain.value.toFixed(3)
-          });
 
+          // 3. FIXED: Cancel old curves and smoothly glide the existing running values
+        pair.oscPrimary.frequency.cancelScheduledValues(now);
+        pair.oscPrimary.frequency.setValueAtTime(pair.oscPrimary.frequency.value, now);
+        pair.oscPrimary.frequency.exponentialRampToValueAtTime(frequency, now + glideDuration);
 
-          oscPrimary.connect(stepEnvelope);
-          oscTritone.connect(secondVolumeNode);
-          secondVolumeNode.connect(stepEnvelope);
-          
-          stepEnvelope.connect(this.BiquadFilter);
+        pair.oscTritone.frequency.cancelScheduledValues(now);
+        pair.oscTritone.frequency.setValueAtTime(pair.oscTritone.frequency.value, now);
+        pair.oscTritone.frequency.exponentialRampToValueAtTime(tritoneFrequency, now + glideDuration);
 
-
-
-
-
-          this.envGenOn(stepEnvelope, 0.1, 0.6, shepardVolumeNode.gain.value);
-          // console.log(`🎵 [Envelope] Layer ${index} - Attack: 0.1, Decay: 0.6, Sustain: ${shepardVolumeNode.gain.value.toFixed(3)}`);
-
-          oscPrimary.start(now);
-          oscTritone.start(now);
-
-          // console.log(`🎵 [Creation] Layer ${index} connected at ${frequency.toFixed(1)}Hz`);
-          baseFrequency = baseFrequency * 2;
-          // console.log("Diagnostics:", { 
-          //   baseFreq: baseFrequency, 
-          //   mult: multiplier, 
-          //   step: this.currentStep 
-          // });
-          
-          return { osc: [oscPrimary, oscTritone], shepard: shepardVolumeNode, env: stepEnvelope 
-        };
+        pair.shepardGain.gain.cancelScheduledValues(now);
+        pair.shepardGain.gain.setValueAtTime(pair.shepardGain.gain.value, now);
+        pair.shepardGain.gain.linearRampToValueAtTime(calculatedVolume, now + glideDuration);
+              
+        
+        
       });
-      // console.table(diagnostics);
-
-      //creating timeout release:
 
       if (this.IdleTimeout != null) {
         clearTimeout(this.IdleTimeout);
@@ -326,44 +159,18 @@ export  class ShepardTone {
 
       this.IdleTimeout = setTimeout(() => {
         console.log("Idle timeout reached");
-        const now = this.audioContext.currentTime;
         const releaseTime = 0.8
 
         this.oscillatorNodes.forEach((pair) => {
-          if (pair && pair.osc && pair.env) {
-            // Trigger the envelope fade-out
-            this.EnvGenOff(pair.env, releaseTime);
-            if (Array.isArray(pair.osc)) {
-              pair.osc.forEach(osc => osc.stop(now + releaseTime));
-            } else {
-              pair.osc.stop(now + releaseTime);
-            }
-            // Clean up the pipes after the fade completes
-            setTimeout(() => {
-              try {
-                pair.env.disconnect(this.gainNode);
-                pair.env.disconnect((this.DelayNode));
-              } catch (e) {}
-
-            }, releaseTime * 1000);
-          }
+          if (!pair) return;
+            this.EnvGenOff(pair.shepardGain, releaseTime);
+          
             
           
         });
-        this.oscillatorNodes.fill(null);
+        this.playing = false;
       },5000)
 
-    };
-
-    /**
-     * Begin playback of the tone, if the tone is already in a playing state this method will have no effect.
-     */
-    play() {
-      if (this.playing) {
-        return;
-      }
-      this.playing = true;
-      this.playStep(0); ///added a number so it won't crash at beginning.
     }
 
     /**
@@ -374,13 +181,11 @@ export  class ShepardTone {
       if (this.timeout !== null) {
         clearTimeout(this.timeout);
       }
-      const now = this.audioContext.currentTime;
-      for (const node of this.oscillatorNodes) {
-        if (Array.isArray(node.osc)) {
-          node.osc.forEach(osc => osc.stop(now));
-        } else {
-          node.osc.stop(now);
-        }
+      for (const pair of this.oscillatorNodes) {
+        if (!pair) continue;
+        const now = this.audioContext.currentTime;
+        const releaseTime = 0.8;
+        this.EnvGenOff(pair.shepardGain, releaseTime);
       }
     }
 
@@ -430,7 +235,7 @@ export  class ShepardTone {
 
       this.BiquadFilter = this.audioContext.createBiquadFilter();
       this.BiquadFilter.type = 'lowpass';
-      this.BiquadFilter.frequency.value = 1300;
+      this.BiquadFilter.frequency.value = 900;
       this.BiquadFilter.Q.value = 0.3;
       // simpler StereoPanner
       this.PannerNode = this.audioContext.createStereoPanner(); 
@@ -451,9 +256,56 @@ export  class ShepardTone {
     
       this.currentStep = (this.currentStep + 1) % this.loopStepsCount;
       
-      this.playStep(this.currentStep);
+      this.playStep(1,this.currentStep);
     }
+  
+    SetupOscillators() {
+
+      this.oscillatorNodes = Array.from({ length: this.octaveCount }).map((_, index) => {
+      const shepardVolumeNode = this.audioContext.createGain();
+      const secondVolumeNode = this.audioContext.createGain();
+      secondVolumeNode.gain.value = this.second_volume;
+
+      const oscPrimary = this.audioContext.createOscillator();
+      const oscTritone = this.audioContext.createOscillator();
+      oscPrimary.type = 'square';
+
+
+
+
+          // ── ADD THIS BLOCK HERE ──
+      const { frequency, tritoneFrequency, calculatedVolume } =
+      this.getLayerState(INITIAL_STEP, index);
+      // or: this.getLayerState(this.currentStep, index)  same thing at boot (both are 0)
+
+      oscPrimary.frequency.value = frequency;
+      oscTritone.frequency.value = tritoneFrequency;
+      shepardVolumeNode.gain.value = calculatedVolume;
+      // silent until play? use: shepardVolumeNode.gain.value = 0;
+      // ── END BLOCK ──
+
+      
+      // Connect them permanently
+      oscPrimary.connect(shepardVolumeNode);
+
+      oscTritone.connect(secondVolumeNode);
+      secondVolumeNode.connect(shepardVolumeNode);
+
+      shepardVolumeNode.connect(this.BiquadFilter);
+
+      // Start them playing silence/default baseline immediately
+      oscPrimary.start(0);
+      oscTritone.start(0);
+
+      // Keep references to everything we need to tweak later
+      return { 
+        oscPrimary: oscPrimary, 
+        oscTritone: oscTritone, 
+        shepardGain: shepardVolumeNode 
+      };
+    });
   }
+}
 
 /** Helper function to create an AudioContext */
  function createAudioContext() {
@@ -462,4 +314,5 @@ export  class ShepardTone {
 
   return new AudioContext();
 }
+
 
