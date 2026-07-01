@@ -7,13 +7,13 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const shepardTone = new ShepardTone(audioContext);
 
 // 3. Define the bridge that responds to hardware changes
-function handleEncoderChange({delta, absoluteStep}) {
+function handleEncoderChange({ delta, absoluteStep }) {
     console.log(`[Main] Encoder turned. Step Change: ${delta}`);
     if (delta === 0 || delta === undefined) return;
- 
-    if (delta !== 0) {
+
+    audioContext.resume().then(() => {
         shepardTone.playStep(delta, absoluteStep);
-    }
+    });
 }
 
 
@@ -28,30 +28,26 @@ setupPhidgets(handleEncoderChange)
 
 
 
-document.getElementById('start-btn').addEventListener('click', () => {
+document.getElementById('start-btn').addEventListener('click', async () => {
         try {
     
 
             
+            await audioContext.resume();
             console.log("Success! Instance created:", shepardTone);
             
             // Start your playback method
-            shepardTone.play();
+            await shepardTone.play();
         } catch (error) {
             console.error("Constructor crashed! Check your JS translations:", error);
         }
     });
 
-    document.getElementById('test-step-btn').addEventListener('click', () => {
+    document.getElementById('test-step-btn').addEventListener('click', async () => {
         try {
-            
-            // triggering the next function
+            await audioContext.resume();
             shepardTone.next();
-            
             console.log("Success! next step played created:", shepardTone.currentStep);
-            
-            // Start your playback method
-            shepardTone.play();
         } catch (error) {
             console.error("Constructor crashed! Check your JS translations:", error);
         }

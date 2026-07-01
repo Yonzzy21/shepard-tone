@@ -97,13 +97,17 @@ export  class ShepardTone {
       const isStartingFromSilence = !this.playing
             // Add delta each encoder tick (unwrapped — never jumps 63→0)
       this.currentStep = targetStep;
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch((err) => {
+          console.warn('AudioContext resume failed', err);
+        });
+      }
       // Use this.currentStep for audio, not the wrapped absoluteStep from Phidget
       //targetStep = this.currentStep;
       this.playing = true;
 
-
       const randomPan = Math.random() *  1.5 - 0.75;
-      console.log(`Random pan: ${randomPan}`);
+      //console.log(`Random pan: ${randomPan}`);
       this.PannerNode.pan.setValueAtTime(this.PannerNode.pan.value, now); // random pan value between -0.5 and 0.5
       this.PannerNode.pan.linearRampToValueAtTime(randomPan, now + 0.3);
       
@@ -116,7 +120,7 @@ export  class ShepardTone {
         console.warn("Speed is zero or not finite, defaulting glide to 0.002");
         glideDuration = 0.002;
       } else{
-          glideDuration = Math.max(0.01, 0.2/speed); // Adjust glide duration based on speed, with a minimum of 0.01 seconds
+          glideDuration = Math.max(0.01, 0.08/speed); // Adjust glide duration based on speed, with a minimum of 0.01 seconds
       }
       if (!Number.isFinite(glideDuration)) {
         console.warn("Glide duration is not finite, defaulting to 0.002");
@@ -133,7 +137,7 @@ export  class ShepardTone {
   
       this.oscillatorNodes.forEach((pair, index) => {
         if (!pair) return;
-        console.log(`[Layer ${index} Structure]:`, pair);
+       // console.log(`[Layer ${index} Structure]:`, pair);
 
         const { frequency, tritoneFrequency, calculatedVolume } = this.getLayerState(targetStep, index);
      
@@ -197,6 +201,13 @@ export  class ShepardTone {
      */
     reset() {
       this.currentStep = INITIAL_STEP;
+    }
+
+    async play() {
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      this.playStep(1, this.currentStep);
     }
 
     /**
@@ -327,7 +338,7 @@ export  class ShepardTone {
 
       const oscPrimary = this.audioContext.createOscillator();
       const oscTritone = this.audioContext.createOscillator();
-      oscPrimary.type = 'triangle';
+      oscPrimary.type = 'square';
 
 
 

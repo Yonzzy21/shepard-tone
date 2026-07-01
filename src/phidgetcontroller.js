@@ -3,12 +3,12 @@ import * as Phidget22 from 'https://cdn.jsdelivr.net/npm/phidget22@3.16.1/+esm';
 
 // 1. Create the accumulator tracking variables here
 let absoluteStep = 0;
-//const TOTAL_AUDIO_STEPS = 128;
+const TOTAL_AUDIO_STEPS = 128;
 // Inside your Phidget Controller initialization / state
 let physicalStepPosition = 0;
 let smoothedStepPosition = 0;
-const maxAllowedDelta = 6;    // Caps aggressive physical spins
-const smoothingFactor = 0.1;  // 0.1 = ultra-smooth lag, 0.9 = snappy snap
+const maxAllowedDelta = 50;    // Caps aggressive physical spins
+const smoothingFactor = 0.9;  // 0.1 = ultra-smooth lag, 0.9 = snappy snap
 
 export async function setupPhidgets(onDataCallback) {
   // 1. FIXED: Correct JavaScript Browser connection format
@@ -27,19 +27,36 @@ export async function setupPhidgets(onDataCallback) {
   encoder.onPositionChange = function (positionChange) {
     const rawDelta = positionChange;
     if (rawDelta === 0) return;
-    // 2. Tame the delta instantly if the user spun it violently
     console.log(`Raw Delta: ${rawDelta}`);
 
-    const clampedDelta = Math.max(-maxAllowedDelta, Math.min(maxAllowedDelta, rawDelta));
+    const direction = Math.sign(rawDelta);
+    const absDelta = Math.abs(rawDelta);
+  
+    // SCALE THE DELTA
+    // Keep small movements responsive while compressing large bursts.
+    let scaledDelta = Math.pow(absDelta, 0.35) * 0.4;
+    let finalStepChange = Math.round(scaledDelta) * direction;
 
-    // 3. Update our internal absolute target tracking position
-    physicalStepPosition += clampedDelta;
-    smoothedStepPosition = smoothedStepPosition + (physicalStepPosition - smoothedStepPosition) * smoothingFactor;
-      // Wrap the absoluteStep within the range of TOTAL_AUDIO_STEPS
-      // absoluteStep = ((absoluteStep % TOTAL_AUDIO_STEPS) + TOTAL_AUDIO_STEPS) % TOTAL_AUDIO_STEPS; 
-      //Currently doesnt do anything special, need to implement future script of speed
+    // Ensure a single encoder tick still triggers audio.
+    if (finalStepChange === 0) {
+      finalStepChange = direction;
+    }
 
-    onDataCallback({delta: clampedDelta, absoluteStep: smoothedStepPosition});
+    // Keep it within your audio engine's sweet spot.
+    const maxAllowedDelta = 50;
+    finalStepChange = Math.max(-maxAllowedDelta, Math.min(maxAllowedDelta, finalStepChange));
+    
+    // // Keep absoluteStep within your audio bounds (0 to 128)
+    // // Choice A: Clamp it so it stops at the ends
+    // absoluteStep = Math.max(0, Math.min(TOTAL_AUDIO_STEPS, absoluteStep));
+
+
+    // 4. Round it out so you get clean increments/decrements
+    absoluteStep += finalStepChange;
+    console.log(`Scaled Delta: ${finalStepChange}`);
+
+
+    onDataCallback({ delta: finalStepChange, absoluteStep });
   };
   
   // 4. Open the physical device link (waits up to 5 seconds)
