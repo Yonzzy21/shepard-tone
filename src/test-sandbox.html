@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Phidget Filter Sandbox</title>
+</head>
+<body>
+    <h1>Phidget Filter Tester</h1>
+    <p>Test your filtering logic without the physical hardware.</p>
+    
+    <button id="smallTick">Simulate Small Turn (+2)</button>
+    <button id="hugeTick">Simulate Aggressive Spin (+120)</button>
+    
+    <div id="output" style="margin-top: 20px; font-family: monospace; background: #eed; padding: 10px;">
+        Results will appear here...
+    </div>
+
+    <script type="module">
+        // Import JUST your processing logic from your script file
+        import { processPositionChange } from './phidgetcontroller.js';
+
+        const outputDiv = document.getElementById('output');
+
+        // This replaces your audio engine callback for testing
+        function mockAudioCallback(data) {
+            const log = `[Callback] Delta: ${data.delta}, Absolute: ${data.absoluteStep}<br>`;
+            outputDiv.innerHTML += log;
+        }
+
+        // Simulate button clicks acting like real hardware events
+        document.getElementById('smallTick').addEventListener('click', () => {
+            outputDiv.innerHTML += "<br><strong>Simulating Raw Delta: 2</strong><br>";
+            processPositionChange(2, mockAudioCallback);
+        });
+
+        document.getElementById('hugeTick').addEventListener('click', () => {
+            outputDiv.innerHTML += "<br><strong>Simulating Raw Delta: 120</strong><br>";
+            processPositionChange(120, mockAudioCallback);
+        });
+    </script>
+</body>
+</html>

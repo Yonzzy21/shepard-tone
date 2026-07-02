@@ -15,12 +15,13 @@ const GAIN_VOLUME_FACTOR = 12;
 export  class ShepardTone {
     constructor(
       audioContext,
+      options = {},
       /** The minimum frequency the tone will reach */
       minimumFrequency = 40,
       /** The maximum frequency the tone will reach */
       maximumFrequency = 6000,
       /** Number of steps a tone loop consists of, an integer bigger than one */
-      loopStepsCount = 1000,
+      loopStepsCount = 2000,
       /** Duration of the loop in milliseconds */
       loopDuration = 5000,
 
@@ -48,6 +49,7 @@ export  class ShepardTone {
       this.second_volume = 0.5;
       this.SetupSynth()
       this.SetupOscillators()
+      this.onFrequencyChange = options.onFrequencyChange;
 
     }
 
@@ -140,8 +142,13 @@ export  class ShepardTone {
        // console.log(`[Layer ${index} Structure]:`, pair);
 
         const { frequency, tritoneFrequency, calculatedVolume } = this.getLayerState(targetStep, index);
-     
         
+        const firstLayer = this.getLayerState(targetStep, 0); 
+        const baseFrequency = firstLayer.frequency;
+
+        if (typeof this.onFrequencyChange === 'function') {
+          this.onFrequencyChange({ frequency: baseFrequency });
+        }
           
 
           // 3. FIXED: Cancel old curves and smoothly glide the existing running values
@@ -258,7 +265,7 @@ export  class ShepardTone {
       this.DelayNode.delayTime.value = 0.7;
 
       this.FeedbackNode = this.audioContext.createGain();
-      this.FeedbackNode.gain.value = 0.9;
+      this.FeedbackNode.gain.value = 0.6;
       /// delay mix controls
       this.DelayMixNode = this.audioContext.createGain();
       this.DelayMixNode.gain.value = 0.15; // 0.4 means echoes are at 40% volume of the original note

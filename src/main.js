@@ -6,7 +6,7 @@ import { Piano }  from './visuals.js';
 
 // 2. Initialize your audio context and Shepard synthesizer
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-const shepardTone = new ShepardTone(audioContext);
+const shepardTone = new ShepardTone(audioContext, { onFrequencyChange: frequencyChangeHandler });
 const rollingPiano = new Piano('canvas-container');
 
 // 3. Define the bridge that responds to hardware changes
@@ -14,12 +14,21 @@ function handleEncoderChange({ delta, absoluteStep }) {
     //console.log(`[Main] Encoder turned. Step Change: ${delta}`);
     rollingPiano.updateSpeed(delta, absoluteStep);
     if (delta === 0 || delta === undefined) return;
+    
 
     audioContext.resume().then(() => {
         shepardTone.playStep(delta, absoluteStep);
         
+        
     });
 }
+
+function frequencyChangeHandler({ frequency }) {
+    //console.log(`[Main] Frequency changed. New Frequency: ${frequency}`);
+    rollingPiano.updateFrequency(frequency);
+    console.log(`Frequency updated in visuals: ${frequency.toFixed(2)} Hz`);
+}
+
 
 
 
