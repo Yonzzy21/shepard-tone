@@ -9,7 +9,8 @@ let physicalStepPosition = 0;
 let smoothedStepPosition = 0;
 const maxAllowedDelta = 50;    // Caps aggressive physical spins
 const smoothingFactor = 0.9;  // 0.1 = ultra-smooth lag, 0.9 = snappy snap
-
+// Track our stop timer globally within the module
+let stopTimeoutTimer = null;
 export async function setupPhidgets(onDataCallback) {
   // 1. FIXED: Correct JavaScript Browser connection format
   // Pass the port (5661) and host address ('127.0.0.1') directly into the constructor
@@ -25,6 +26,23 @@ export async function setupPhidgets(onDataCallback) {
   
   // 3. Listen for changes
   encoder.onPositionChange = function (positionChange) {
+    // --- STOP WATCHDOG START ---
+    // Every time an event fires, clear the previous timeout
+    if (stopTimeoutTimer) {
+      clearTimeout(stopTimeoutTimer);
+    }
+
+    // Set a new timeout. If 150ms passes without another tick, 
+    // we assume the user let go and force speed to 0.
+    stopTimeoutTimer = setTimeout(() => {
+      //console.log("⏸️ Encoder stopped. Resetting speed to 0.");
+      onDataCallback({ delta: 0, absoluteStep: 0  });
+    }, 150);
+    // --- STOP WATCHDOG END ---
+    
+    
+    
+    
     const rawDelta = positionChange;
     if (rawDelta === 0) return;
     console.log(`Raw Delta: ${rawDelta}`);
@@ -34,7 +52,7 @@ export async function setupPhidgets(onDataCallback) {
   
     // SCALE THE DELTA
     // Keep small movements responsive while compressing large bursts.
-    let scaledDelta = Math.pow(absDelta, 0.35) * 0.4;
+    let scaledDelta = Math.pow(absDelta, 0.5) * 0.4;
     let finalStepChange = Math.round(scaledDelta) * direction;
 
     // Ensure a single encoder tick still triggers audio.
@@ -43,7 +61,7 @@ export async function setupPhidgets(onDataCallback) {
     }
 
     // Keep it within your audio engine's sweet spot.
-    const maxAllowedDelta = 50;
+    const maxAllowedDelta = 40;
     finalStepChange = Math.max(-maxAllowedDelta, Math.min(maxAllowedDelta, finalStepChange));
     
     // // Keep absoluteStep within your audio bounds (0 to 128)
@@ -54,6 +72,7 @@ export async function setupPhidgets(onDataCallback) {
     // 4. Round it out so you get clean increments/decrements
     absoluteStep += finalStepChange;
     console.log(`Scaled Delta: ${finalStepChange}`);
+    console.log(`Absolute Step: ${absoluteStep}`);
 
 
     onDataCallback({ delta: finalStepChange, absoluteStep });
