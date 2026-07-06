@@ -229,8 +229,11 @@ export  class ShepardTone {
     }
     envGenOn(envelope, a, d,s ){
       const now = this.audioContext.currentTime;
-      envelope.gain.cancelScheduledValues(0);
-      envelope.gain.setValueAtTime(0.001, now);
+      envelope.gain.cancelAndHoldAtTime(now);
+      //envelope.gain.setValueAtTime(0.001, now);
+      if (envelope.gain.value <= 0) { //preventing 0 completely silent 
+        envelope.gain.setValueAtTime(0.001, now);
+      }
       const safeSustain = Math.max(0.001, s); // Ensure target is never 0
       envelope.gain.exponentialRampToValueAtTime(safeSustain, now + a);
       envelope.gain.exponentialRampToValueAtTime(safeSustain, now + a + d);

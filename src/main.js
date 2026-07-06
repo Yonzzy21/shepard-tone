@@ -51,27 +51,27 @@ setupPhidgets(handleEncoderChange)
 
 
 
-document.getElementById('start-btn').addEventListener('click', async () => {
-        try {
+// document.getElementById('start-btn').addEventListener('click', async () => {
+//         try {
     
 
             
-            await audioContext.resume();
-            console.log("Success! Instance created:", shepardTone);
+//             await audioContext.resume();
+//             console.log("Success! Instance created:", shepardTone);
             
-            // Start your playback method
-            await shepardTone.play();
-        } catch (error) {
-            console.error("Constructor crashed! Check your JS translations:", error);
-        }
-    });
+//             // Start your playback method
+//             await shepardTone.play();
+//         } catch (error) {
+//             console.error("Constructor crashed! Check your JS translations:", error);
+//         }
+//     });
 
-    document.getElementById('test-step-btn').addEventListener('click', async () => {
-        try {
-            await audioContext.resume();
-            shepardTone.next();
-            console.log("Success! next step played created:", shepardTone.currentStep);
-        } catch (error) {
-            console.error("Constructor crashed! Check your JS translations:", error);
-        }
-    });
+    // document.getElementById('test-step-btn').addEventListener('click', async () => {
+    //     try {
+    //         await audioContext.resume();
+    //         shepardTone.next();
+    //         console.log("Success! next step played created:", shepardTone.currentStep);
+    //     } catch (error) {
+    //         console.error("Constructor crashed! Check your JS translations:", error);
+    //     }
+    // });

@@ -7,16 +7,17 @@ export class Piano {
     this.speed = 0;   // How fast the piano rolls
     this.friction = 0.97 //lower = stops faster
     this.canvasX = 1200;
-    this.canvasY = 800;
+    this.canvasY = 1000;
     // Start the p5 instance
     this.frequency = 0.0
     this.p5Instance = new p5(this.sketch.bind(this));
-    this.noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    this.noteNames = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
     this.onTestTrigger = onTestTrigger; // 
     this.noteAlphas = {};
     this.noteNames.forEach(note => {
       this.noteAlphas[note] = 0;
     });
+    this.keyHeight = 100; // Height of each key in pixels
 
   }
   getNoteFromFrequency(frequency) {
@@ -31,15 +32,20 @@ export class Piano {
     // Update the frequency display in the UI
     this.frequency = frequency;
     this.note = this.getNoteFromFrequency(frequency);
+    // 🚀 CALCULATE EXACT PIXEL TARGET FROM FREQUENCY
+    // Convert frequency to an absolute note number (e.g., C4 = 60, A4 = 69)
+    const exactNoteNumber = 12 * (Math.log2(frequency / 440)) + 69;
+    const octaveHeight = this.keyHeight * 7; // Height of 1 full octave (7 white keys)
+    this.targetScrollY = -exactNoteNumber * (octaveHeight / 12);
 
   }
   updateSpeed(delta, absoluteStep) {
-        // Map or scale the encoder value so it's a reasonable speed for p5
-        // For example: if encoder output is high, divide it to get a smooth speed like 1 to 10
-    if (delta !== 0){    
-    this.speed = (delta)*-0.02; 
-    //console.log(`Rolling Piano Speed Updated: ${delta}, Absolute Step: ${absoluteStep}`);
-        }
+    //     // Map or scale the encoder value so it's a reasonable speed for p5
+    //     // For example: if encoder output is high, divide it to get a smooth speed like 1 to 10
+    // if (delta !== 0){    
+    // this.speed = (delta)*-0.03; 
+    // //console.log(`Rolling Piano Speed Updated: ${delta}, Absolute Step: ${absoluteStep}`);
+    //     }
     }
   sketch(p) {
     p.setup = () => {
@@ -51,45 +57,59 @@ export class Piano {
   }
 
     p.draw = () => {
-      p.background(30); // Dark background
 
+
+
+
+      p.background(30); // Dark background
+      const octaveHeight = this.keyHeight * 7;   // 60px * 7 = 420px
+      const verticalCenter = this.canvasY / 2;
       this.noteNames.forEach(note => {
-        if (note === this.note && this.speed !== 0) {
+        if (note === this.note) {
           this.noteAlphas[note] = 255;
         } else {
           this.noteAlphas[note] *= 0.98; // Fade out the highlight
         }
       });
 
-      // Update our rolling position
-      this.scrollY -= this.speed;
-      this.speed *= this.friction;
-      if (Math.abs(this.speed) < 0.01) {
-        this.speed = 0;
-      }
+      // // Update our rolling position
+      // this.scrollY -= this.speed;
+      // this.speed *= this.friction;
+      // if (Math.abs(this.speed) < 0.01) {
+      //   this.speed = 0;
+      // }
 
-      
-      // // If the loop goes too far, reset it to keep it seamless
-      // if (this.scrollY < -this.canvasY) { // 400 is the height of the canvas
-      //   this.scrollY += this.canvasY + 40; //modolo to the height of the octaves so its seamless
-      // }
-      //  // If the loop goes too far, reset it to keep it seamless
-      // if (this.scrollY > 20) { // 400 is the height of the canvas
-      //   this.scrollY -= this.canvasY + 40; //modolo to the height of the octaves so its seamless
-      // }
 
             // One full piano octave pattern (7 white keys * 60px) = 420px.
-      const octaveHeight = 420; 
+   
 
-      // If we roll down past one octave, shift back by exactly one octave
-      if (this.scrollY <= -octaveHeight) { 
-        this.scrollY += octaveHeight; 
-      }
-      // If we roll up past the starting point, shift forward by exactly one octave
-      if (this.scrollY >= 0) { 
-        this.scrollY -= octaveHeight; 
-      }
+      // // If we roll down past one octave, shift back by exactly one octave
+      // if (this.scrollY <= -octaveHeight) { 
+      //   this.scrollY += octaveHeight; 
+      // }
+      // // If we roll up past the starting point, shift forward by exactly one octave
+      // if (this.scrollY >= 0) { 
+      //   this.scrollY -= octaveHeight; 
+      // }
+      // 🚀 THE SMOOTH LOCK ENGINE
+      if (this.targetScrollY !== undefined) {
 
+        // Ensure we are comparing wrapped coordinates so the camera doesn't spin wildly on loop resets
+        let wrappedTarget = ((this.targetScrollY % octaveHeight) + octaveHeight) % octaveHeight;
+        let wrappedCurrent = ((this.scrollY % octaveHeight) + octaveHeight) % octaveHeight;
+
+        // Handle shortest path over the boundary seam (keeps transitions seamless)
+        let diff = wrappedTarget - wrappedCurrent;
+        if (diff > octaveHeight / 2) wrappedCurrent += octaveHeight;
+        if (diff < -octaveHeight / 2) wrappedCurrent -= octaveHeight;
+
+        // Smoothly slide the current scroll position toward the target position
+        // 0.15 controls the responsiveness. Increase for tighter tracking, decrease for more glide.
+        this.scrollY = p.lerp(wrappedCurrent, wrappedTarget, 0.03);
+        
+        // Final wrap to keep your scrolling variable bound within 1 octave range
+        this.scrollY = ((this.scrollY % octaveHeight) + octaveHeight) % octaveHeight;
+      }
 
 
 
@@ -98,12 +118,12 @@ export class Piano {
       // --- THE ROLLING BOX (PUSH/POP) ---
       p.push(); 
       // Move the entire coordinate system left based on scrollY
-      p.translate(0, this.scrollY); 
+      p.translate(0, -this.scrollY + verticalCenter); 
 
 
     // We start drawing slightly off-screen (negative Y) so the loop looks endless
-      let startY = -this.canvasY; 
-      let keyHeight = 60;
+      let startY = -(this.canvasY); 
+      let keyHeight = this.keyHeight;
       let totalKeys = 40; // Adjust based on how many you want to render
 
       // Draw a long string of keys that roll across the screen
@@ -131,7 +151,7 @@ export class Piano {
           
           p.fill(100, 30, 158, currentAlpha); //Color for the text
           p.textSize(32);
-          p.text(` ${WhiteKeyNote}`, 300, yPos +40);
+          p.text(` ${WhiteKeyNote}`, 450, yPos +50);
         }
 
       }
@@ -153,16 +173,20 @@ export class Piano {
           p.stroke(0);
           p.fill(mixedColor);
        
+          let blackKeyWidth = this.canvasX * 0.3;
+          let blackKeyHeight = keyHeight *0.6;
 
-          let blackKeyY = yPos + keyHeight -15 ; // Slightly offset for aesthetics
-          p.rect(0, blackKeyY , 240,30); // Black keys are shorter and narrower}
+          
+
+          let blackKeyY = (yPos + keyHeight) - blackKeyHeight/2 ; // Slightly offset for aesthetics
+          p.rect(0, blackKeyY , blackKeyWidth,blackKeyHeight); // Black keys are shorter and narrower}
           let currentAlpha = this.noteAlphas[BlackKeyNote] || 0;
           if (currentAlpha > 0) {
             p.stroke(100, 30, 158, currentAlpha); // Purple highlight for white key
             
             p.fill(100, 30, 158, currentAlpha); //Color for the text
             p.textSize(32);
-            p.text(` ${BlackKeyNote}`, 100, yPos + 72);
+            p.text(` ${BlackKeyNote}`, 100, blackKeyY+40);
           }
       }
     }

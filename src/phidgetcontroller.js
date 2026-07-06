@@ -24,7 +24,7 @@ export function processPositionChange(rawDelta, onDataCallback) {
 
   const direction = Math.sign(rawDelta);
   const absDelta = Math.abs(rawDelta);
-  const scaledDelta = absDelta / 100.0
+  const scaledDelta = absDelta / 20.0
 
   // // SCALE THE DELTA
   // let scaledDelta = Math.pow(absDelta, 0.5) * 1.5;
