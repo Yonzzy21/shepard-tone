@@ -173,7 +173,7 @@ export class Piano {
           p.stroke(0);
           p.fill(mixedColor);
        
-          let blackKeyWidth = this.canvasX * 0.3;
+          let blackKeyWidth = this.canvasX * 0.35;
           let blackKeyHeight = keyHeight *0.6;
 
           
