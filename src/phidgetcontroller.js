@@ -4,7 +4,7 @@ import * as Phidget22 from 'https://cdn.jsdelivr.net/npm/phidget22@3.16.1/+esm';
 /// --- STATE VARIABLES ---
 let absoluteStep = 0;
 let stopTimeoutTimer = null;
-const maxAllowedDelta = 100;
+const maxAllowedDelta = 80;
 
 /**
  * PURE PROCESSING FUNCTION
@@ -24,16 +24,30 @@ export function processPositionChange(rawDelta, onDataCallback) {
 
   const direction = Math.sign(rawDelta);
   const absDelta = Math.abs(rawDelta);
+  const scaledDelta = absDelta / 100.0
 
-  // SCALE THE DELTA
-  let scaledDelta = Math.pow(absDelta, 0.75) * 0.3;
-  console.log(`Scaled Delta (before rounding): ${scaledDelta}`);
+  // // SCALE THE DELTA
+  // let scaledDelta = Math.pow(absDelta, 0.5) * 1.5;
+  // console.log(`Scaled Delta (before rounding): ${scaledDelta}`);
   let finalStepChange = Math.round(scaledDelta) * direction;
+  if (finalStepChange === 0 && rawDelta !== 0) {
+    finalStepChange = direction;
+  }
 
-  // Ensure a single encoder tick still triggers audio
+  // // Ensure a single encoder tick still triggers audio
+  // if (finalStepChange === 0) {
+  //   finalStepChange = direction;
+  // }
+
+
+  console.log(`Raw Pulses: ${rawDelta} -> Computed Synth Speed: ${finalStepChange}`);
+  
+  // Ensure even tiny nudges still register a minimum step of 1
   if (finalStepChange === 0) {
     finalStepChange = direction;
   }
+
+
 
   // Bound it to sweet spot
   finalStepChange = Math.max(-maxAllowedDelta, Math.min(maxAllowedDelta, finalStepChange));

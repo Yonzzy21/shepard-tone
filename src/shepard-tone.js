@@ -19,11 +19,10 @@ export  class ShepardTone {
       /** The minimum frequency the tone will reach */
       minimumFrequency = 40,
       /** The maximum frequency the tone will reach */
-      maximumFrequency = 6000,
+      maximumFrequency = 4978,
       /** Number of steps a tone loop consists of, an integer bigger than one */
       loopStepsCount = 2000,
-      /** Duration of the loop in milliseconds */
-      loopDuration = 5000,
+   
 
       // stepSpeed = 300
     ) {
@@ -31,7 +30,6 @@ export  class ShepardTone {
       this.minimumFrequency = minimumFrequency;
       this.maximumFrequency = maximumFrequency;
       this.loopStepsCount = loopStepsCount;
-      this.loopDuration = loopDuration;
 
       this.gainNode = this.audioContext.createGain();
       this.envelope = this.audioContext.createGain();
@@ -46,9 +44,10 @@ export  class ShepardTone {
       this.IdleTimeout = null;
       this.playing = false;
       this.volume = 1.0;
-      this.second_volume = 0.5;
+      this.second_volume = 0.4;
       this.SetupSynth()
-      this.SetupOscillators()
+      // this.SetupOscillators()
+      this.SetupOscillators_2()
       this.onFrequencyChange = options.onFrequencyChange;
 
     }
@@ -77,7 +76,7 @@ export  class ShepardTone {
       
       // 5. Calculate final wrapped frequencies
       const frequency = absoluteBase * Math.pow(2, wrappedOctaves);
-      const tritoneFrequency = frequency * 2**0.5;
+      const tritoneFrequency = frequency * 2**(-11/12); // 6 semitones above the base frequency
       
       // 6. Calculate the Gaussian curve position X (Guaranteed to be 0.0 to 1.0)
       const x = wrappedOctaves / logSpan;
@@ -108,7 +107,7 @@ export  class ShepardTone {
       //targetStep = this.currentStep;
       this.playing = true;
 
-      const randomPan = Math.random() *  1.5 - 0.75;
+      const randomPan = Math.random() *  1.2 - 0.6;
       //console.log(`Random pan: ${randomPan}`);
       this.PannerNode.pan.setValueAtTime(this.PannerNode.pan.value, now); // random pan value between -0.5 and 0.5
       this.PannerNode.pan.linearRampToValueAtTime(randomPan, now + 0.3);
@@ -117,12 +116,12 @@ export  class ShepardTone {
 
       const speed = Math.abs(delta);
       let glideDuration;
-      //console.log(`Speed: ${speed}`);
+      console.log(`Speed: ${speed}`);
       if (speed === 0 || !Number.isFinite(speed)) {
         console.warn("Speed is zero or not finite, defaulting glide to 0.002");
         glideDuration = 0.002;
       } else{
-          glideDuration = Math.max(0.01, 0.08/speed); // Adjust glide duration based on speed, with a minimum of 0.01 seconds
+          glideDuration = Math.max(0.01, 0.5/speed); // Adjust glide duration based on speed, with a minimum of 0.01 seconds
       }
       if (!Number.isFinite(glideDuration)) {
         console.warn("Glide duration is not finite, defaulting to 0.002");
@@ -253,7 +252,7 @@ export  class ShepardTone {
 
       this.BiquadFilter = this.audioContext.createBiquadFilter();
       this.BiquadFilter.type = 'lowpass';
-      this.BiquadFilter.frequency.value = 4000;
+      this.BiquadFilter.frequency.value = 8000;
       this.BiquadFilter.Q.value = 0.7;
 
       // simpler StereoPanner
@@ -262,31 +261,31 @@ export  class ShepardTone {
 
       //Delay effects
       this.DelayNode = this.audioContext.createDelay(2.0);
-      this.DelayNode.delayTime.value = 0.7;
+      this.DelayNode.delayTime.value = 0.6;
 
       this.FeedbackNode = this.audioContext.createGain();
       this.FeedbackNode.gain.value = 0.6;
       /// delay mix controls
       this.DelayMixNode = this.audioContext.createGain();
-      this.DelayMixNode.gain.value = 0.15; // 0.4 means echoes are at 40% volume of the original note
+      this.DelayMixNode.gain.value = 0.7; // 0.4 means echoes are at 40% volume of the original note
   
       //Reverb effect
       this.ReverbCutoffFilter = this.audioContext.createBiquadFilter();
       this.ReverbCutoffFilter.type = 'lowpass';
-      this.ReverbCutoffFilter.frequency.value = 3000;
+      this.ReverbCutoffFilter.frequency.value = 2000;
 
       this.ReverbDelay = this.audioContext.createDelay(2.0);
-      this.ReverbDelay.delayTime.value = 0.04; // Ultra-short delay for room density
+      this.ReverbDelay.delayTime.value = 0.3; // Ultra-short delay for room density
       
       this.ReverbFeedback = this.audioContext.createGain();
-      this.ReverbFeedback.gain.value = 0.7; // How long the reverb rings
+      this.ReverbFeedback.gain.value = 0.8; // How long the reverb rings
 
       // Balance controls for the reverb mix
       this.ReverbDryGain = this.audioContext.createGain();
-      this.ReverbDryGain.gain.value = 1.0; // Keep original sound at 100%
+      this.ReverbDryGain.gain.value =0.7; // Keep original sound at 100%
 
       this.ReverbWetGain = this.audioContext.createGain();
-      this.ReverbWetGain.gain.value = 0.9; // Reverb tail volume level
+      this.ReverbWetGain.gain.value = 0.7; // Reverb tail volume level
 
 
 
@@ -345,11 +344,7 @@ export  class ShepardTone {
 
       const oscPrimary = this.audioContext.createOscillator();
       const oscTritone = this.audioContext.createOscillator();
-      oscPrimary.type = 'square';
-
-
-
-
+      oscPrimary.type = 'sine';
           // ── ADD THIS BLOCK HERE ──
       const { frequency, tritoneFrequency, calculatedVolume } =
       this.getLayerState(INITIAL_STEP, index);
@@ -359,21 +354,66 @@ export  class ShepardTone {
       oscTritone.frequency.value = 0.0001;
       shepardVolumeNode.gain.value = calculatedVolume;
       // silent until play? use: shepardVolumeNode.gain.value = 0;
-      // ── END BLOCK ──
-
-      
+      // ── END BLOCK ─
       // Connect them permanently
       oscPrimary.connect(shepardVolumeNode);
-
       oscTritone.connect(secondVolumeNode);
       secondVolumeNode.connect(shepardVolumeNode);
-
       shepardVolumeNode.connect(this.BiquadFilter);
-
       // Start them playing silence/default baseline immediately
       oscPrimary.start(0);
       oscTritone.start(0);
+      // Keep references to everything we need to tweak later
+      return { 
+        oscPrimary: oscPrimary, 
+        oscTritone: oscTritone, 
+        shepardGain: shepardVolumeNode,
+        secondGain: secondVolumeNode
+      };
+    });
 
+    //SetupOscillators_2()
+
+    
+  }
+
+  SetupOscillators_2() {
+
+      this.oscillatorNodes = Array.from({ length: this.octaveCount }).map((_, index) => {
+      const shepardVolumeNode = this.audioContext.createGain();
+      const fmDepthNode = this.audioContext.createGain();
+      fmDepthNode.gain.value = 300; // Adjust the depth of the FM modulation
+
+
+      const secondVolumeNode = this.audioContext.createGain();
+      secondVolumeNode.gain.value = this.second_volume;
+
+      const oscPrimary = this.audioContext.createOscillator();
+      const oscTritone = this.audioContext.createOscillator();
+
+      oscPrimary.type = 'sine';
+      oscTritone.type = 'sine';
+      oscPrimary.connect(fmDepthNode);
+      fmDepthNode.connect(oscTritone.frequency);
+          // ── ADD THIS BLOCK HERE ──
+      const { frequency, tritoneFrequency, calculatedVolume } =
+      this.getLayerState(INITIAL_STEP, index);
+      // or: this.getLayerState(this.currentStep, index)  same thing at boot (both are 0)
+
+      oscPrimary.frequency.value = 0.0001;
+      oscTritone.frequency.value = 0.0001;
+      shepardVolumeNode.gain.value = calculatedVolume;
+      // silent until play? use: shepardVolumeNode.gain.value = 0;
+      // ── END BLOCK ─
+      // Connect them permanently
+      oscPrimary.connect(fmDepthNode);
+      fmDepthNode.connect(oscTritone.frequency);
+
+      oscTritone.connect(shepardVolumeNode);
+      shepardVolumeNode.connect(this.BiquadFilter);
+      // Start them playing silence/default baseline immediately
+      oscPrimary.start(0);
+      oscTritone.start(0);
       // Keep references to everything we need to tweak later
       return { 
         oscPrimary: oscPrimary, 
