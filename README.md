@@ -18,21 +18,14 @@ Interactive Shepard tone installation for an endless hamster wheel exhibit. Walk
 - **Phidget rotary encoder** attached to the wheel
 - **Phidget Network Server** running on the exhibit machine  
   - Default connection: `127.0.0.1:8989`
-- A modern browser with Web Audio support (Chrome recommended)
+- A modern browser with Web Audio support (I used Chrome)
 - A local HTTP server (required for ES modules — do not open files via `file://`)
 
 ## Quick Start
 
 1. Install and launch the [Phidget Network Server](https://www.phidgets.com/docs/Phidget_Network_Server).
 2. Plug in the encoder and confirm it appears in the Phidget Control Panel.
-3. Serve the `src/` folder over HTTP, for example:
-
-   ```bash
-   npx serve src
-   ```
-
-   Or use VS Code Live Server (this project’s launch config expects `http://127.0.0.1:5500`).
-
+3. I used VS Code Live Server (this project’s launch config expects `http://127.0.0.1:5500`).
 4. Open `index.html` in the browser.
 5. Turn the encoder — audio and visuals should respond immediately (no Start button required; `audioContext.resume()` runs on the first encoder event).
 
