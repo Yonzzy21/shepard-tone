@@ -168,13 +168,7 @@ Constructor defaults in `src/shepard-tone.js`:
 All visual sizing lives in `src/visuals.js` inside the `Piano` class.
 
 ### Canvas size
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `canvasX` | `1200` | Canvas width in pixels |
-| `canvasY` | `1000` | Canvas height in pixels |
-
-> **Note:** `main.js` passes `800, 400` to `new Piano(...)`, but the constructor currently ignores those arguments. Change `canvasX` / `canvasY` in `visuals.js` directly.
+ `main.js` passes `1200, 1000` to `new Piano(...)`. Change `canvasX` / `canvasY` in `main.js`.
 
 ### Key size and layout
 
