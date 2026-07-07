@@ -1,7 +1,0 @@
-{
-  "mode": "modules",
-  "out": "docs",
-  "excludeExternals": true,
-  "excludePrivate": true,
-  "excludeNotExported": true
-}
