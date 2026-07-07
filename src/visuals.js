@@ -1,13 +1,13 @@
 // visuals.js
 
 export class Piano {
-  constructor(containerId, onTestTrigger) {
+  constructor(containerId, onTestTrigger, width, height) {
     this.containerId = containerId;
     this.scrollY = 0; // Tracks the rolling position
     this.speed = 0;   // How fast the piano rolls
     this.friction = 0.97 //lower = stops faster
-    this.canvasX = 1200;
-    this.canvasY = 1000;
+    this.canvasX = width;
+    this.canvasY = height;
     // Start the p5 instance
     this.frequency = 0.0
     this.p5Instance = new p5(this.sketch.bind(this));

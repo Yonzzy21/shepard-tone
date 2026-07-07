@@ -7,7 +7,7 @@ import { Piano }  from './visuals.js';
 // 2. Initialize your audio context and Shepard synthesizer
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const shepardTone = new ShepardTone(audioContext, { onFrequencyChange: frequencyChangeHandler });
-const rollingPiano = new Piano('canvas-container', handleEncoderChange, 800, 400); // Assuming you want a canvas of 800x400
+const rollingPiano = new Piano('canvas-container', handleEncoderChange, 1200, 1000); // Assuming you want a canvas of 800x400
 
 // 3. Define the bridge that responds to hardware changes
 function handleEncoderChange({ delta, absoluteStep }) {
@@ -75,3 +75,19 @@ setupPhidgets(handleEncoderChange)
     //         console.error("Constructor crashed! Check your JS translations:", error);
     //     }
     // });
+
+    //FOR TEST WITHOUT ENCODER
+// 1. Open up a data communication pipeline named 'encoder_bridge'
+const encoderChannel = new BroadcastChannel('encoder_bridge');
+
+// 2. Listen for injected control data from your test HTML
+encoderChannel.onmessage = (event) => {
+    const { delta, absoluteStep } = event.data;
+    
+    console.log(`📥 Injected Signal Received via Bridge -> Step: ${absoluteStep}, Speed: ${delta}`);
+    
+    // 3. Direct injection straight into your actual synth engine!
+    if (typeof shepardTone !== 'undefined' && shepardTone.playStep) {
+        shepardTone.playStep(delta, absoluteStep);
+    }
+};

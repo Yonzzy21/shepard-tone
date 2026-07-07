@@ -20,8 +20,8 @@ export  class ShepardTone {
       minimumFrequency = 40,
       /** The maximum frequency the tone will reach */
       maximumFrequency = 4978,
-      /** Number of steps a tone loop consists of, an integer bigger than one */
-      loopStepsCount = 2000,
+      /** Number of steps an octave */
+      stepsPerOctave = 2000,
    
 
       // stepSpeed = 300
@@ -29,7 +29,7 @@ export  class ShepardTone {
       this.audioContext = audioContext;
       this.minimumFrequency = minimumFrequency;
       this.maximumFrequency = maximumFrequency;
-      this.loopStepsCount = loopStepsCount;
+      this.stepsPerOctave = stepsPerOctave;
 
       this.gainNode = this.audioContext.createGain();
       this.envelope = this.audioContext.createGain();
@@ -53,14 +53,14 @@ export  class ShepardTone {
     }
 
     getLayerState(targetStep, index) {
-      const multiplier = Math.pow(2, 1 / this.loopStepsCount);
+      const multiplier = Math.pow(2, 1 / this.stepsPerOctave);
       
       // 1. Calculate base frequency for step 0
       const absoluteBase = this.minimumFrequency;
       
       // 2. Find out how many total octaves our targetStep represents
-      const stepsPerOctave = this.loopStepsCount; // e.g., 64 steps per octave loop
-      const totalOctavesFromMovement = targetStep / stepsPerOctave;
+      // const stepsPerOctave = this.loopStepsCount; // e.g., 64 steps per octave loop
+      const totalOctavesFromMovement = targetStep / this.stepsPerOctave;
       
       // 3. Determine the natural octave offset for this specific layer index
       const layerOctaveOffset = index;
@@ -333,7 +333,7 @@ export  class ShepardTone {
 
     next() {
     
-      this.currentStep = (this.currentStep + 1) % this.loopStepsCount;
+      this.currentStep = (this.currentStep + 1) % this.stepsPerOctave;
       
       this.playStep(1,this.currentStep);
     }

@@ -1,40 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Phidget Filter Sandbox</title>
+    <meta charset="UTF-8">
+    <title>Remote Encoder Controller</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+        .card { background: #2a2a2a; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h1 { margin-top: 0; color: #fff; font-size: 22px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .control-group { margin: 20px 0; }
+        button { display: block; wwidth: 100%; width: 100%; padding: 12px; margin: 10px 0; font-size: 14px; font-weight: bold; color: #fff; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-small { background: #3498db; }
+        .btn-small:hover { background: #2980b9; }
+        .btn-huge { background: #e67e22; }
+        .btn-huge:hover { background: #d35400; }
+        #status { font-family: monospace; background: #111; color: #0f0; padding: 10px; border-radius: 4px; font-size: 13px; min-height: 40px; white-space: pre-wrap; margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Phidget Filter Tester</h1>
-    <p>Test your filtering logic without the physical hardware.</p>
-    
-    <button id="smallTick">Simulate Small Turn (+2)</button>
-    <button id="hugeTick">Simulate Aggressive Spin (+120)</button>
-    
-    <div id="output" style="margin-top: 20px; font-family: monospace; background: #eed; padding: 10px;">
-        Results will appear here...
+
+    <div class="card">
+        <h1>🎛️ Virtual Encoder Injection</h1>
+        <p>Keep your main audio app open in another tab. Click below to inject test changes instantly.</p>
+        
+        <div class="control-group">
+            <button id="spinUpSmall" class="btn-small">Simulate Turn Up (+10 Step, Slow Glide)</button>
+            <button id="spinDownSmall" class="btn-small" style="background:#e74c3c">Simulate Turn Down (-10 Step, Slow Glide)</button>
+            <button id="spinUpFast" class="btn-huge">Simulate Fast Spin Up (+200 Steps, Snap Glide)</button>
+        </div>
+
+        <h3>Transmitter Status:</h3>
+        <div id="status">Ready to transmit data...</div>
     </div>
 
     <script type="module">
-        // Import JUST your processing logic from your script file
-        import { processPositionChange } from './phidgetcontroller.js';
+        // 1. Establish connection to the same bridge name used in main.js
+        const encoderChannel = new BroadcastChannel('encoder_bridge');
+        const statusDiv = document.getElementById('status');
 
-        const outputDiv = document.getElementById('output');
+        // Track a fake position locally in this window
+        let virtualAbsoluteStep = 0;
 
-        // This replaces your audio engine callback for testing
-        function mockAudioCallback(data) {
-            const log = `[Callback] Delta: ${data.delta}, Absolute: ${data.absoluteStep}<br>`;
-            outputDiv.innerHTML += log;
+        function transmitSignal(stepChange, calculatedVelocity) {
+            virtualAbsoluteStep += stepChange;
+
+            const payload = {
+                delta: calculatedVelocity,       // Low number = slow glide, High number = fast snap glide
+                absoluteStep: virtualAbsoluteStep // Accumulating absolute step position
+            };
+
+            // 2. Beam the payload directly into your main audio script tab
+            encoderChannel.postMessage(payload);
+
+            statusDiv.innerText = `📡 Transmitted Signal:\nStep Delta: ${stepChange > 0 ? '+' : ''}${stepChange} | Absolute Target: ${virtualAbsoluteStep} | Speed Velocity: ${calculatedVelocity}`;
         }
 
-        // Simulate button clicks acting like real hardware events
-        document.getElementById('smallTick').addEventListener('click', () => {
-            outputDiv.innerHTML += "<br><strong>Simulating Raw Delta: 2</strong><br>";
-            processPositionChange(2, mockAudioCallback);
+        // --- Hook up button events to mirror hardware behaviors ---
+        
+        document.getElementById('spinUpSmall').addEventListener('click', () => {
+            // Moves 1 step forward at a lazy speed metric of 15 (creates a longer tracking glide)
+            transmitSignal(10, 15);
         });
 
-        document.getElementById('hugeTick').addEventListener('click', () => {
-            outputDiv.innerHTML += "<br><strong>Simulating Raw Delta: 120</strong><br>";
-            processPositionChange(120, mockAudioCallback);
+        document.getElementById('spinDownSmall').addEventListener('click', () => {
+            // Moves 1 step backward at a lazy speed metric of 15
+            transmitSignal(-10, 15);
+        });
+
+        document.getElementById('spinUpFast').addEventListener('click', () => {
+            // Jumps 8 full steps forward simultaneously at an intense velocity metric of 120 (forces an instant snap glide)
+            transmitSignal(200, 120);
         });
     </script>
 </body>
