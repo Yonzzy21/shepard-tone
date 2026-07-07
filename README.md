@@ -211,17 +211,7 @@ targetScrollY   = -exactNoteNumber × (octaveHeight / 12)
 
 ### Encoder scaling only
 
-Open `src/test-sandbox.html` via your local server. Use the buttons to simulate raw encoder deltas and inspect the scaled `delta` and `absoluteStep` in the page output.
-
-### Audio / visuals only
-
-Temporarily wire keyboard or button handlers in `main.js` to call:
-
-```js
-handleEncoderChange({ delta: 1, absoluteStep: someNumber });
-```
-
-Or uncomment the Start / Test Step buttons in `index.html` and their listeners in `main.js`.
+Open `src/test-sandbox.html` via your local server, press buttons to test - amount can be adjusted in main.js
 
 ---
 
