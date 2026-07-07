@@ -116,7 +116,6 @@ export  class ShepardTone {
 
       const speed = Math.abs(delta);
       let glideDuration;
-      console.log(`Speed: ${speed}`);
       if (speed === 0 || !Number.isFinite(speed)) {
         console.warn("Speed is zero or not finite, defaulting glide to 0.002");
         glideDuration = 0.002;

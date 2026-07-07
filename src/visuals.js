@@ -6,7 +6,7 @@ export class Piano {
     this.scrollY = 0; // Tracks the rolling position
     this.speed = 0;   // How fast the piano rolls
     this.friction = 0.97 //lower = stops faster
-    this.canvasX = 1200;
+    this.canvasX = 1200; 
     this.canvasY = 1000;
     // Start the p5 instance
     this.frequency = 0.0
@@ -72,12 +72,7 @@ export class Piano {
         }
       });
 
-      // // Update our rolling position
-      // this.scrollY -= this.speed;
-      // this.speed *= this.friction;
-      // if (Math.abs(this.speed) < 0.01) {
-      //   this.speed = 0;
-      // }
+
 
 
             // One full piano octave pattern (7 white keys * 60px) = 420px.
@@ -105,7 +100,7 @@ export class Piano {
 
         // Smoothly slide the current scroll position toward the target position
         // 0.15 controls the responsiveness. Increase for tighter tracking, decrease for more glide.
-        this.scrollY = p.lerp(wrappedCurrent, wrappedTarget, 0.03);
+        this.scrollY = p.lerp(wrappedCurrent, wrappedTarget, 0.02);
         
         // Final wrap to keep your scrolling variable bound within 1 octave range
         this.scrollY = ((this.scrollY % octaveHeight) + octaveHeight) % octaveHeight;
