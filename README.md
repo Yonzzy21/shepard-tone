@@ -104,7 +104,7 @@ rawDelta (from hardware, e.g. +2 or +120)
 | 61–100 | 2–3 |
 | 120 | 3 |
 
-Use `test-sandbox.html` to preview scaling without hardware. It calls `processPositionChange()` directly with simulated values (+2 small turn, +120 aggressive spin).
+Use `test-sandbox.html` to preview scaling without hardware. It calls `processPositionChange()` directly with simulated values (+10 small turn, +200 aggressive spin).
 
 ### Tuning guide
 
@@ -136,7 +136,7 @@ Constructor defaults in `src/shepard-tone.js`:
 |-----------|---------|-------------|
 | `minimumFrequency` | `40` Hz | Bottom of the audible Shepard spectrum |
 | `maximumFrequency` | `4978` Hz | Top of the Shepard spectrum — controls how “high” the illusion can feel |
-| `loopStepsCount` | `2000` | Steps per octave. Higher = finer pitch resolution, slower climb per step |
+| `StepsPerOctave` | `2000` | Steps per octave. Higher = finer pitch resolution, slower climb per step |
 | `octaveCount` | `11` | Number of simultaneous octave layers |
 | `second_volume` | `0.4` | FM/tritone layer depth (via `SetupOscillators_2`) |
 
