@@ -1,6 +1,7 @@
 # Shepard Tone Exhibition
 
 Interactive Shepard tone installation for an endless hamster wheel exhibit. Walking on the wheel turns a Phidget rotary encoder, which drives a continuously rising Shepard-tone synthesizer and a rolling piano visualization.
+Project Confluence page: **[https://momath1.atlassian.net/wiki/x/DQBrK](https://momath1.atlassian.net/wiki/x/DQBrK)**
 
 ## Overview
 
